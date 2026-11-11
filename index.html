@@ -312,7 +312,7 @@ function put(col,rec){if(!rec.id)rec.id=uid();rec._maj=Date.now();DB[col][rec.id
 function del(col,id){var r=DB[col][id];if(!r)return;r._del=true;r._maj=Date.now();dirty[col+"|"+id]=1;persist();syncSoon()}
 function list(col){return Object.keys(DB[col]).map(function(k){return DB[col][k]}).filter(function(r){return!r._del})}
 var st=null;function syncSoon(){clearTimeout(st);st=setTimeout(sync,1500)}
-function hdr(){return{apikey:cfg.key,Authorization:"Bearer "+cfg.key,"Content-Type":"application/json"}}
+function hdr(){var h={apikey:cfg.key,"Content-Type":"application/json"};if(/^eyJ/.test(cfg.key))h.Authorization="Bearer "+cfg.key;return h}
 async function rpc(fn,body){var r=await fetch(cfg.url.replace(/\/+$/,"")+"/rest/v1/rpc/"+fn,{method:"POST",headers:hdr(),body:JSON.stringify(body)});if(!r.ok){var tx="";try{tx=await r.text()}catch(e){}if(/code invalide|42501/.test(tx))throw new Error("code de synchronisation incorrect");if(r.status===404)throw new Error("script SQL pas encore exécuté");throw new Error(fn+" "+r.status)}return r.json()}
 function vitrineRow(p,maj){return{id:"vitrine|"+p.id,collection:"vitrine",data:{id:p.id,nom:p.nom,prix:p.pv,ancien:p.ancien||0,etiquette:p.etiquette||"",categorie:p.categorie||"",description:p.description||"",photo:p.photo||"",photos:p.photosSite||[],tailles:p.tailles||[],couleurs:p.couleurs||[],dispo:(Number(p.stock)||0)>0,sv:p.vs?p.sv:null},maj:maj,supprime:!p.enligne||!!p._del}}
 async function sync(){
